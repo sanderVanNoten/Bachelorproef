@@ -19,16 +19,21 @@ De inleiding moet de lezer net genoeg informatie verschaffen om het onderwerp te
 
 \section{\IfLanguageName{dutch}{Probleemstelling}{Problem Statement}}%
 \label{sec:probleemstelling}
+In dit onderzoek wordt een oplossing gezocht voor een probleem binnen het bedrijf delaware . Meer bepaald Anthony Seys, een werknemer bij delaware die op dit moment bezig is met het automatiseren van enkele processen, zou graag een mogelijke oplossing voorgesteld krijgen voor deze probleemstelling. Het probleem dat zich voordoet heeft te maken met het automatiseren van firewall regels. Concreet is er een webportal, waar klanten firewall regels kunnen meegeven. Deze regels worden vervolgens geconfigureerd en doorgegeven aan de firewall. Bij het controleren van deze gegevens vooraleer deze bij de firewall terecht komen, ondervindt men problemen. De configuratie gebeurt met een automatisatie tool genaamd Ansible. Deze tool laat niet toe om controles uit te voeren vooraleer de zaken worden geconfigureerd. Hierdoor is een oplossing nodig   die het mogelijk maakt om alle gegevens, die door de klant worden meegegeven, via de website te controleren en na te gaan of deze correct zijn. Hiervoor moet er een toolset gezocht worden die dit mogelijk maakt en die daarbijkomend ook kan samenwerken met Ansible. Dit onderzoek kan ertoe leiden dat delaware in de toekomst snel en efficiënt klanten kan verder helpen met het toevoegen van firewall regels, onafhankelijk van de soort firewall die er draait. Deze oplossing / toolset zou er tevens ook voor kunnen zorgen dat er tijdens dit proces geen tussenkomst van delaware meer zal nodig zijn, maar dat de klant dit makkelijk en volledig autonoom kan uitvoeren. Als gevolg zullen  werknemers meer tijd hebben voor het oplossen van grotere problemen. \newline
+
+
 
 Uit je probleemstelling moet duidelijk zijn dat je onderzoek een meerwaarde heeft voor een concrete doelgroep. De doelgroep moet goed gedefinieerd en afgelijnd zijn. Doelgroepen als ``bedrijven,'' ``KMO's'', systeembeheerders, enz.~zijn nog te vaag. Als je een lijstje kan maken van de personen/organisaties die een meerwaarde zullen vinden in deze bachelorproef (dit is eigenlijk je steekproefkader), dan is dat een indicatie dat de doelgroep goed gedefinieerd is. Dit kan een enkel bedrijf zijn of zelfs één persoon (je co-promotor/opdrachtgever).
 
 \section{\IfLanguageName{dutch}{Onderzoeksvraag}{Research question}}%
 \label{sec:onderzoeksvraag}
 
+
 Wees zo concreet mogelijk bij het formuleren van je onderzoeksvraag. Een onderzoeksvraag is trouwens iets waar nog niemand op dit moment een antwoord heeft (voor zover je kan nagaan). Het opzoeken van bestaande informatie (bv. ``welke tools bestaan er voor deze toepassing?'') is dus geen onderzoeksvraag. Je kan de onderzoeksvraag verder specifiëren in deelvragen. Bv.~als je onderzoek gaat over performantiemetingen, dan 
 
 \section{\IfLanguageName{dutch}{Onderzoeksdoelstelling}{Research objective}}%
 \label{sec:onderzoeksdoelstelling}
+Het uiteindelijke doel van dit onderzoek is om een oplossing te vinden voor het bovenstaande beschreven probleem. Concreet zal er een proof-of-concept worden opgesteld. Hierin zal een simpel netwerk worden opgezet in Azure dat bestaat uit een firewall en twee virtuele machines elk in hun eigen subnet. Elk van deze apparaten zal worden geconfigureerd en geautomatiseerd met Ansible. Met als uiteindelijke doel een manier te vinden om alle gegevens , die afkomstig zijn van een website waarop de klant een firewall regel request doet , te controleren en de nodige configuraties al dan niet te laten doorvoeren. Op het moment dat er een oplossing wordt gevonden waarbij het mogelijk is om de gewenste criteria te kunnen controleren en daarna de configuratie te kunnen automatiseren, wordt dit beschouwd als een succesvolle oplossing. 
 
 Wat is het beoogde resultaat van je bachelorproef? Wat zijn de criteria voor succes? Beschrijf die zo concreet mogelijk. Gaat het bv.\ om een proof-of-concept, een prototype, een verslag met aanbevelingen, een vergelijkende studie, enz.
 

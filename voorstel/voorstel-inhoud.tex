@@ -3,37 +3,53 @@
 \section{Introductie}%
 \label{sec:introductie}
 
-Waarover zal je bachelorproef gaan? Introduceer het thema en zorg dat volgende zaken zeker duidelijk aanwezig zijn:
 
-\begin{itemize}
-  \item kaderen thema
-  \item de doelgroep
-  \item de probleemstelling en (centrale) onderzoeksvraag
-  \item de onderzoeksdoelstelling
-\end{itemize}
 
-Denk er aan: een typische bachelorproef is \textit{toegepast onderzoek}, wat betekent dat je start vanuit een concrete probleemsituatie in bedrijfscontext, een \textbf{casus}. Het is belangrijk om je onderwerp goed af te bakenen: je gaat voor die \textit{ene specifieke probleemsituatie} op zoek naar een goede oplossing, op basis van de huidige kennis in het vakgebied.
+Het automatiseren van IT-processen wordt \newline steeds belangrijker voor de verdere ontwikkeling en efficiëntie van bedrijfsprocessen. Dit zorgt ervoor dat het IT-departement zich niet eerst steeds moet focussen op kleine simpele taken, zoals bijvoorbeeld het installeren en configureren van een databank. Met behulp van verschillende tools kan dit zeer snel geautomatiseerd worden. 
 
-De doelgroep moet ook concreet en duidelijk zijn, dus geen algemene of vaag gedefinieerde groepen zoals \emph{bedrijven}, \emph{developers}, \emph{Vlamingen}, enz. Je richt je in elk geval op it-professionals, een bachelorproef is geen populariserende tekst. Eén specifiek bedrijf (die te maken hebben met een concrete probleemsituatie) is dus beter dan \emph{bedrijven} in het algemeen.
+Dit onderzoek gaat over het deployen van firewallrules via een webapplicatie en het automatiseren hiervan. Vaak gebeurt het implementeren van deze regels nog manueel. Het komt echter steeds voor dat een klant nog bijkomende zaken nodig heeft, waarvoor een nieuwe firewallrule nodig is. Concreet wordt er dus onderzocht welke toolset geschikt is voor het deployen van deze regels, afkomstig van een web request, naar een Azure firewall en/of Network Virtual Appliance. Dit onderzoek wordt uitgevoerd in opdracht van het bedrijf delaware die graag een oplossing ziet voor dit probleem. 
 
-Formuleer duidelijk de onderzoeksvraag! De begeleiders lezen nog steeds te veel voorstellen waarin we geen onderzoeksvraag terugvinden.
+Het uiteindelijke doel van dit onderzoek is het opstellen van een proof-of-concept waarin duidelijk wordt welke toolset je het beste kunt gebruiken om het probleem op te lossen, indien dit mogelijk is.
 
-Schrijf ook iets over de doelstelling. Wat zie je als het concrete eindresultaat van je onderzoek, naast de uitgeschreven scriptie? Is het een proof-of-concept, een rapport met aanbevelingen, \ldots Met welk eindresultaat kan je je bachelorproef als een succes beschouwen?
 
 %---------- Stand van zaken ---------------------------------------------------
 
 \section{State-of-the-art}%
 \label{sec:state-of-the-art}
 
-Hier beschrijf je de \emph{state-of-the-art} rondom je gekozen onderzoeksdomein, d.w.z.\ een inleidende, doorlopende tekst over het onderzoeksdomein van je bachelorproef. Je steunt daarbij heel sterk op de professionele \emph{vakliteratuur}, en niet zozeer op populariserende teksten voor een breed publiek. Wat is de huidige stand van zaken in dit domein, en wat zijn nog eventuele open vragen (die misschien de aanleiding waren tot je onderzoeksvraag!)?
 
-Je mag de titel van deze sectie ook aanpassen (literatuurstudie, stand van zaken, enz.). Zijn er al gelijkaardige onderzoeken gevoerd? Wat concluderen ze? Wat is het verschil met jouw onderzoek?
 
-Verwijs bij elke introductie van een term of bewering over het domein naar de vakliteratuur, bijvoorbeeld~\autocite{Hykes2013}! Denk zeker goed na welke werken je refereert en waarom.
+Dit onderzoek zal vooral gaan over het automatisatieaspect van het probleem. Meer bepaald zal er gekeken worden binnen het domein van Infrastructure as Code (IaC).
+Over dit onderwerp specifiek is nog geen onderzoek terug te vinden. Er wordt gekeken naar verschillende elementen die van toepassing zijn. Wanneer er dieper ingegaan wordt op de onderzoeksvraag roept dit meteen enkele vragen op. 
 
-Draag zorg voor correcte literatuurverwijzingen! Een bronvermelding hoort thuis \emph{binnen} de zin waar je je op die bron baseert, dus niet er buiten! Maak meteen een verwijzing als je gebruik maakt van een bron. Doe dit dus \emph{niet} aan het einde van een lange paragraaf. Baseer nooit teveel aansluitende tekst op eenzelfde bron.
+\subsection*{Wat is het verschil tussen een Azure firewall en een Network Virtual Appliance?}
+Voor het verdere verloop van dit onderzoek is het enkel noodzakelijk om de twee verschillende firewalls even high level te bekijken. 
+Het verschil tussen beide vormen is al meermaals onderzocht. Hoewel heel wat zaken niet relevant zijn en buiten de scope van dit onderzoek vallen, komen er, voor dit onderzoek, belangrijke verschillen naar boven.
 
-Als je informatie over bronnen verzamelt in JabRef, zorg er dan voor dat alle nodige info aanwezig is om de bron terug te vinden (zoals uitvoerig besproken in de lessen Research Methods).
+Een Azure firewall is een oplossing die Microsoft aanbiedt voor het beveiligen van virtuele netwerken binnen Azure. \autocite{Cooke} Het is een volledig alleenstaande firewall, die onderdeel uitmaakt van Azures Platform as a Service. \newline \autocite{Seferlis2018} Azure firewall biedt een scala aan verschillende oplossingen voor allerlei problemen, door de aanwezigheid van de vele functies. Dit valt echter buiten de scope van dit onderzoek. Aan de werking van Azure firewall kan namelijk een heel nieuw onderzoek gewijd worden.
+
+Een Network Virtual Appliance (NVA) is een virtuele machine met een user kernel etc. Deze VM wordt in het geval van dit onderzoek softwarematig ingesteld als een firewall. \autocite{Awati} Op deze manier kan er gebruik gemaakt worden van firewall software van allerlei vendors. Het is ook mogelijk om deze in een Virtual Azure netwerk te plaatsen. Dit wordt meestal gebruikt wanneer iemand specifieke kennis heeft over de firewall van één specifieke vendor, maar toch in de Azure omgeving wilt werken. Dit kan handig zijn wanneer er een overschakeling wordt gemaakt van on premise naar de cloud. 
+\autocite{Aviatrix} Er kan dus geconcludeerd worden dat het grootste verschil tussen beiden is dat Azure firewall een native hardwarematige firewall is binnen de Azure PaaS en dat een NVA een normale VM is die softwarematig wordt omgevormd naar een firewall. Voor dit onderzoek zal het dus van belang zijn om goed te onderscheiden naar welke firewall er rules zullen gedeployed worden. In het geval van een NVA zal het ook belangrijk zijn om te weten welke software er gedraaid wordt en van welke vendor deze afkomstig is. 
+
+\subsection*{Wat is Infrastructure-as-Code?}
+Infrastructure-as-Code is het bouwen en onderhouden van infrastructuur aan de hand van code. Dit is een technologie die ontstaan is door de opmars van de cloud. Vroeger was code enkel voor software en was er hardware nodig voor de infrastructuur. Veel zaken in de cloud zijn nu virtueel. Dat zorgt ervoor dat IaC mogelijk is. Voor het bouwen van de infrastructuren wordt er gebruik gemaakt van templates die de infrastructuur omschrijven als een object. Deze objecten worden omschreven in YML-, JSON- of XML-formaat. Zo biedt het ook enorm veel voordelen. Het interessantste voordeel voor dit onderzoek is dat, door middel van IaC, de infrastructuur zeer makkelijk uit te rollen valt naar meerdere omgevingen. \autocite{Bulthuis} Het biedt ook enorm veel mogelijkheden op vlak van uitbreiding en flexibiliteit. Het is steeds mogelijk je infrastructuur zeer snel aan te passen en uit te breiden. \autocite{Morris2016}  Voor dit onderzoek wordt er specifiek gezocht naar een oplossing in Azure met potentieel verschillende vormen firewalls. 
+Hiervoor zijn verschillende oplossingen. Terraform kan worden gebruikt voor het managen en configureren van servers binnen Azure, AWS en Google Cloud. \autocite{IONOS2019} \autocite{Janashia2020} 
+Bicep biedt ook dezelfde functies aan, maar is enkel te gebruiken voor Azure toepassingen. Deze twee voorbeelden zijn dan ook de meest geschikte tools voor dit onderzoek. \newline \autocite{Zerger} 
+
+
+\subsection*{Hoe een firewall regel deployen naar Azure firewall?}
+
+Voor het deployen van firewall rules naar een Azure firewall zijn er verschillende manieren om dit aan te pakken. 
+Volgens Vincent Misson \autocite{Misson2021} is het een mogelijke oplossing om dit te doen met Terraform. Dit is een Infrastructure as Code tool die instaat voor het deployen en configureren van servers, verdeeld over verschillende Cloud providers en wordt geschreven in Go formaat. Vincent toont enkele voorbeelden die nuttig kunnen zijn voor het vervolg van dit onderzoek. Terraform kan je gebruiken voor deployment naar Azure, AWS en Google cloud. \autocite{Harrington2022} 
+Volgens de documentatie van Microsoft \autocite{2022a} is dit ook perfect mogelijk door gebruik te maken van bicep. Ook Bicep is een Infrastructure as Code tool. Het werkt zeer gelijkaardig aan Terraform, alleen is bicep enkel bedoeld voor het deployen naar Azure. \autocite{Dave2021} 
+In een andere documentatie van Microsoft \autocite{2022} wordt ook een oplossing geboden aan de hand van de Azure portal. Dit kan voor andere doeleinde interessant zijn, maar deze manier van werken zal niet aan bod komen in dit onderzoek, aangezien het op deze manier niet mogelijk is om zaken snel te automatiseren. 
+
+
+\subsection*{Hoe een firewall rule deployen naar een Native Virtual Appliance}
+Wanneer er gekeken wordt naar het deployen van firewall regels naar een NVA, blijkt dat dit heel vendor afhankelijk is. Er is niet meteen een centrale manier om dit te doen. Dit gebeurt steeds met de API van de vendor. Het is wel mogelijk om te achterhalen welke API er gebruikt wordt voor het configureren van de NVA in kwestie. Dit door gebruik te maken van een PowerShell commando. \autocite{Microsoft2022} Ook is het mogelijk om firewall regels te deployen tijdens het aanmaken van een NVA in de Azure portal. \autocite{Alto2022} Dit zou kunnen zorgen voor een mogelijkheid om, door middel van Bicep, de Azure portal aan te spreken en op deze manier de firewall regel te kunnen deployen. 
+
+
+ 
 
 % Voor literatuurverwijzingen zijn er twee belangrijke commando's:
 % \autocite{KEY} => (Auteur, jaartal) Gebruik dit als de naam van de auteur
@@ -42,31 +58,18 @@ Als je informatie over bronnen verzamelt in JabRef, zorg er dan voor dat alle no
 %   functie heeft in de zin (bv. ``Uit onderzoek door Doll & Hill (1954) bleek
 %   ...'')
 
-Je mag deze sectie nog verder onderverdelen in subsecties als dit de structuur van de tekst kan verduidelijken.
 
 %---------- Methodologie ------------------------------------------------------
 \section{Methodologie}%
 \label{sec:methodologie}
 
-Hier beschrijf je hoe je van plan bent het onderzoek te voeren. Welke onderzoekstechniek ga je toepassen om elk van je onderzoeksvragen te beantwoorden? Gebruik je hiervoor literatuurstudie, interviews met belanghebbenden (bv.~voor requirements-analyse), experimenten, simulaties, vergelijkende studie, risico-analyse, PoC, \ldots?
-
-Valt je onderwerp onder één van de typische soorten bachelorproeven die besproken zijn in de lessen Research Methods (bv.\ vergelijkende studie of risico-analyse)? Zorg er dan ook voor dat we duidelijk de verschillende stappen terug vinden die we verwachten in dit soort onderzoek!
-
-Vermijd onderzoekstechnieken die geen objectieve, meetbare resultaten kunnen opleveren. Enquêtes, bijvoorbeeld, zijn voor een bachelorproef informatica meestal \textbf{niet geschikt}. De antwoorden zijn eerder meningen dan feiten en in de praktijk blijkt het ook bijzonder moeilijk om voldoende respondenten te vinden. Studenten die een enquête willen voeren, hebben meestal ook geen goede definitie van de populatie, waardoor ook niet kan aangetoond worden dat eventuele resultaten representatief zijn.
-
-Uit dit onderdeel moet duidelijk naar voor komen dat je bachelorproef ook technisch voldoen\-de diepgang zal bevatten. Het zou niet kloppen als een bachelorproef informatica ook door bv.\ een student marketing zou kunnen uitgevoerd worden.
-
-Je beschrijft ook al welke tools (hardware, software, diensten, \ldots) je denkt hiervoor te gebruiken of te ontwikkelen.
-
-Probeer ook een tijdschatting te maken. Hoe lang zal je met elke fase van je onderzoek bezig zijn en wat zijn de concrete \emph{deliverables} in elke fase?
+Dit onderzoek zal in verschillende delen verlopen. In het eerste deel zal er vooral informatie worden vergaard om het probleem zo goed mogelijk te begrijpen. Deze informatie wordt verkregen aan de hand van relevante literatuurstudie. Ook zal er beroep gedaan worden op interviews met belanghebbenden om op deze manier een requirements-analyse te kunnen uitvoeren. Dit zal ervoor zorgen dat er een optimale oplossing komt voor het beschreven probleem. Dit onderdeel van het onderzoek zal vermoedelijk 20 uur in beslag nemen. 
+De informatie wordt vervolgens gebruikt voor het opmaken van een Proof-of-Concept, waarin alle informatie zal toegepast worden in de praktijk. Dit Proof-of-Concept zal uiteindelijk ook het eindproduct zijn, waarin de oplossing van het probleem wordt weergegeven. Hierover zal ook een presentatie gegeven worden. Voor dit onderdeel wordt er beroep gedaan op communicatie met de copromoter en het bedrijf waarvoor dit onderzoek wordt uitgevoerd. Hiervoor zal een uitgebreide verzameling van software en hardware nodig zijn. Zo zal het mogelijk moeten zijn om gebruik te maken van alle Microsoft Azure features voor een zo'n specifiek mogelijke oplossing. Op deze manier kan er een realistisch scenario worden opgebouwd. Verder zal er ook eventueel beroep gedaan worden op een webapplicatie waarmee het mogelijk is firewall regels in te geven. Dit zal een zeer simpele applicatie zijn, geschreven in JavaScript. Deze applicatie is essentieel voor het oplossen van het gegeven probleem. Het is de bedoeling dat een klant aan de hand van een webapplicatie firewall regels kan doorsturen naar een firewall. Deze regels zullen worden opgenomen in een JSON-file. Op deze manier kan deze makkelijk worden geïmplementeerd in een script. Deze scripts zullen hoogstwaarschijnlijk worden gemaakt in Bicep of Terraform.  
+Het zou kunnen dat tijdens het uitvoeren van het effectief onderzoek een betere oplossing wordt gevonden.
+Concreet wordt er een Azure netwerk opgezet met een Azure firewall en een Azure netwerk opgezet die gebruik maakt van een Network Virtual Appliance. Op beide netwerken zal dan ook een webapplicatie draaien. Vervolgens worden er templates gebouwd, in verschillende Infrastructure as Code tools, voor het deployen van de gewenste firewall regels. Vervolgens zal er ook gekeken worden of deze manier van werken ook toegepast kan worden op een Network Security Group (NSG). Voor dit onderdeel wordt ongeveer 40 uur geschat. Ten slotte worden de resultaten geanalyseerd en samen gebundeld in een concrete conclusie. 
 
 %---------- Verwachte resultaten ----------------------------------------------
 \section{Verwacht resultaat, conclusie}%
 \label{sec:verwachte_resultaten}
 
-Hier beschrijf je welke resultaten je verwacht. Als je metingen en simulaties uitvoert, kan je hier al mock-ups maken van de grafieken samen met de verwachte conclusies. Benoem zeker al je assen en de onderdelen van de grafiek die je gaat gebruiken. Dit zorgt ervoor dat je concreet weet welk soort data je moet verzamelen en hoe je die moet meten.
-
-Wat heeft de doelgroep van je onderzoek aan het resultaat? Op welke manier zorgt jouw bachelorproef voor een meerwaarde?
-
-Hier beschrijf je wat je verwacht uit je onderzoek, met de motivatie waarom. Het is \textbf{niet} erg indien uit je onderzoek andere resultaten en conclusies vloeien dan dat je hier beschrijft: het is dan juist interessant om te onderzoeken waarom jouw hypothesen niet overeenkomen met de resultaten.
-
+Tijdens het uitvoeren van dit onderzoek wordt er verwacht dat er een oplossing wordt gevonden voor het omschreven probleem. Vermoedelijk zullen hier drie of vier verschillende soorten tools voor nodig zijn. Dit zal er bijgevolg voor zorgen dat het niet mogelijk zal zijn om in alle gevallen het proces volledig te automatiseren. De automatisatie naar een Azure firewall zou moeten lukken door middel van tools, zoals Terraform en Bicep. In tegenstelling tot het deployen van firewall regels naar een NVA, zal dit niet vanzelfsprekend zijn. Dit komt door de verschillende factoren die dit resultaat kunnen beïnvloeden.  Voor delaware zal dit onderzoek ertoe leiden dat ze in het verdere toekomst snel en efficiënt de klant kunnen verder helpen met het toevoegen van firewall regels, onafhankelijk van welke soort firewall er draait. Dit zou ervoor kunnen zorgen dat er tijdens dit proces geen tussenkomst van delaware meer zal nodig zijn, maar dat de klant dit makkelijk en volledig autonoom kan uitvoeren. Dit zorgt ervoor dat de werknemers meer tijd zullen hebben voor het oplossen van grotere problemen. 
