@@ -1,4 +1,20 @@
 %%=============================================================================
+%% Proof of concept
+%%=============================================================================
+\usepackage{graphicx}
+\graphicspath{ {./graphics/} }
+\chapter{\IfLanguageName{dutch}{Proof Of Concept}{Proof Of Concept}}%
+
+In dit hoofdstuk wordt de proof of concept uitgewerkt. De recent verkregen informatie wordt hierbij omgezet in de praktijk. De Proof Of Concept zal een beeld vormen van de oplossing voor het gestelde probleem. Als eerst zal er gekeken worden naar de gebruikte netwerkopstelling binnen Azure.
+Vervolgens zal de gebruikte infrastructuur aan bod komen. Daarnaast zal er dieper worden ingegaan op Ansible en de bijhorende playbooks die zorgen voor de configuratie van de firewall. Verder wordt er gekeken naar de uitwerking van het powershell script dan instaat voor het uitvoeren van controles op de ingevoerde data door de klant. Dit script zal alle zaken die hiervoor werden besproken samenbrengen tot 1 werkende geheel. 
+
+\newpage
+
+\section{Netwerkopstelling}
+De netwerkopstelling die gebruikt wordt voor de Proof of Concept bestaat uit 2 virtuele machines elk in hun eigen subnet respectievelijk. In het eerste subnet met netwerkadres 172.22.2.0 bevindt zich een webserver met het adres 172.22.2.5. In het tweede subnet met netwerkadres 172.22.1.0 bevindt zich een host met het adres 172.22.1.5. Tussen deze twee subnets bevindt zich een firewall in de vorm van een Network Virtual Appliance (NVA) van fortinet. Deze netwerkopstelling zorgt voor een ideale testomgeving. De mogelijkheid voorzien dat de host de webserver kan bereiken aan de hand van geautomatiseerde firewallrules waarop controle is uitgevoerd, is het uitendelijke doel van deze Proof of Concept. 
+\subsection{Topologie}
+\includegraphics[width=100mm]{bachproef/graphics/topologie.png}
+%%=============================================================================
 %% Methodologie
 %%=============================================================================
 
