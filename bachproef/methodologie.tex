@@ -10,9 +10,52 @@ Vervolgens zal de gebruikte infrastructuur aan bod komen. Daarnaast zal er diepe
 \newpage
 
 \section{Netwerkopstelling}
-De netwerkopstelling die gebruikt wordt voor de Proof of Concept bestaat uit 2 virtuele machines elk in hun eigen subnet respectievelijk. In het eerste subnet met netwerkadres 172.22.2.0 bevindt zich een webserver met het adres 172.22.2.5. In het tweede subnet met netwerkadres 172.22.1.0 bevindt zich een host met het adres 172.22.1.5. Tussen deze twee subnets bevindt zich een firewall in de vorm van een Network Virtual Appliance (NVA) van fortinet. Deze netwerkopstelling zorgt voor een ideale testomgeving. De mogelijkheid voorzien dat de host de webserver kan bereiken aan de hand van geautomatiseerde firewallrules waarop controle is uitgevoerd, is het uitendelijke doel van deze Proof of Concept. 
+De netwerkopstelling die gebruikt wordt voor de Proof of Concept bestaat uit 2 virtuele machines elk in hun eigen subnet respectievelijk. In het eerste subnet met netwerkadres 172.22.2.0 bevindt zich een virtuele machine met het adres 172.22.2.5. Op deze machine staat een apache webserver geïnstalleerd. In het tweede subnet met netwerkadres 172.22.1.0 bevindt zich een virtuele machine met het adres 172.22.1.5. Deze machine zal dienen als host. Tussen deze twee subnets bevindt zich een firewall in de vorm van een Network Virtual Appliance (NVA) van Fortinet. Deze maakt gebruik van drie interfaces. Elk subnet is verbonden met één van deze interfaces. De derde interface is verbonden met de buitenwereld. Deze netwerkopstelling zorgt voor een ideale testomgeving. De mogelijkheid voorzien dat de host de webserver kan bereiken aan de hand van geautomatiseerde firewallrules met behulp van Ansible waarop, controle is uitgevoerd doormiddel van een powershell script, is het uitendelijke doel van deze Proof of Concept. In het werkveld zal deze opstelling complexer zijn dan wat hier wordt opgebouwd. Voor dit onderzoek is het voldoende om het simpel te houden. Dit is een perfecte manier om aan te tonen dat de onderzoeksvraag beantwoord wordt. 
+\newline
+
+\begin{tabularx}{0.8\textwidth} { 
+  | >{\centering\arraybackslash}X 
+  | >{\centering\arraybackslash}X 
+  | >{\centering\arraybackslash}X
+  | >{\centering\arraybackslash}X | }
+ \hline
+ Naam & Subnet & Adres & Firewall interface \\
+ \hline
+ Host  & 172.22.1.0  & 172.22.1.5 & 172.22.1.4 \\
+\hline
+ Webserver  & 172.22.2.0  & 172.22.2.5  & 172.22.2.4 \\
+\hline
+\end{tabularx}
 \subsection{Topologie}
-\includegraphics[width=100mm]{bachproef/graphics/topologie.png}
+
+\includegraphics[width=100mm]{bachproef/graphics/topologie.drawio.png}
+\newpage
+\section{Infrastructuur}
+In dit onderdeel wordt besproken welke software , tools etc. gebruikt worden voor het opstellen van de Proof of Concept. Ook wordt er besproken wat er gebruikt wordt bij het uitwerken van de eerste versies en welke problemen dit met zich meebrengt om uiteindelijk niet voor die bepaalde optie te kiezen. Het is de bedoeling dat de infrastructuur snel en makkelijk opgezet kan worden door eender wie, zonder dat er veel extra software geïnstalleerd dient te worden. 
+\subsection{Manueel?}
+Als eerste werd er gekeken naar een oplossing waarbij er manueel een linux virtuele machine werd opgezet. Hierop werd de nodige software (Ansible, ...) geïnstalleerd en al de benodigdheden geconfigureerd. Het werd al snel duidelijk dat dit een zeer omslachtige manier van werken was. Er was geen makkelijke manier om met een shared folder te werken. De enige manier om deze configuratie van de virtuele machine te delen was door het nemen van een image en deze te versturen. Deze bestanden kunnen groot zijn en zijn bijgevolg niet makkelijk te verdelen. Het was ook niet mogelijk om vanop afstand gemakkelijk de configuratie van de virtuele machine te gaan aanpassen. Hiervoor moest je steeds rechtstreeks inloggen op de machine en de juiste configuratie bestanden zoeken en aanpassen. Er was dus nood aan een vorm van automatisatie om zaken makkelijker te configureren. Het moest ook makkelijker door te geven zijn aan bijvoorbeeld een collega, zonder dat deze hiervoor een groot bestand moest binnenhalen. 
+\subsection{Vagrant?}
+Om de problemen op te lossen die kwamen kijken bij het manueel opstellen, werd er gebruik gemaakt van Vagrant. Dit is een handige tool voor de automatisatie en installatie van virtuele machines met een specifieke configuratie. Voor deze Proof of Concept werd er een virtuele machine opgezet met Vagrant waarop de Ansible software werd geïnstalleerd. Dit zorgde voor enkele problemen. Het was niet mogelijk voor de virtuele machine om een verbinding op te zetten met de firewall om hierop zaken te gaan uitvoeren met behulp van Ansible. Met Vagrant werken zou er bijgevolg ook tot leiden dat er allerlei zaken zouden moeten geïnstalleerd worden op de lokale host. Dit zorgt ervoor dat het niet zo vanzelfsprekend is om dit door te geven aan een collega. Hiervoor zou documentatie geschreven horen te worden om de werking van alles te begrijpen. Dit leidde tot de conclusie dat dit een te omslachtige manier van werken is , dit kon dus makkelijker. 
+\newpage
+
+\subsection{Docker!}
+Aangezien Vagrant niet meteen gezien wordt als de beste oplossing, is er nood aan een alternatief. Wanneer er nood is aan een oplossing waarbij snel en efficiënt een instantie van een virtuele machine moet worden opgezet , waarbij flexibiliteit belangrijk is, blijkt Docker een goeie oplossing. De mogelijkheid om de configuratie op dockerhub te plaatsen zorgt voor een makkelijke distributie van de opstelling. Docker is bijgevolg de enige software die nodig is voor het opstellen en gebruiken van de gehele infrastructuur. Het installeren van deze software kan op twee manieren. In het geval van een Windows machines kan dit op twee verschillende manieren gebeuren. Dit kan enerzijds via de command line interface of anderzijds via een .exe bestand. Op Linux machines kan dit enkel via de command line interface. Hiervoor kan de documentatie van Docker geraadpleegd worden via \url{ https://www.docker.com/}. \newline
+
+Docker maakt gebruik van een eigen bestandsformaat, namelijk een dockerfile. Deze dockerfile wordt gebruikt voor het configureren van instanties van een virtuele machine. Deze instanties worden containers genoemd. Deze containers bevatten enkel de software en functionaliteiten die meegegeven worden in de dockerfile. \newline
+
+Hieronder worden enkele lijnen getoond afkomstig uit de dockerfile die gebruikt werd voor de opbouw van de Proof of Concept. 
+
+\begin{verbatim}
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get -y install python3 python3-nacl python3-pip libffi-dev vim
+
+COPY ./credentials /root/.azure/
+COPY ./azureProfile.json /root/.azure/
+\end{verbatim}
+Het eerste wat meteen opvalt is de manier waarop het bestand is opgebouwd. Een Dockerfile is makkelijk leesbaar. Zo wordt er gebruik gemaakt van verschillende keywords. het keyword "FROM" wordt gebruikt om te definiëren welke Operating system er gebruikt zal worden. In dit voorbeeld is de container een Linux machine die gebruik maakt van de Ubuntu versie 22.04 distributie. Verder wordt er gebruik gemaakt van het keyword "RUN". Na dit keyword volgt er steeds een commando dat uitgevoerd dient te worden op de command line interface. In dit voorbeeld worden er verschillende packages , zoals python , pip , vim ,... geïnstalleerd bij het bouwen van de container. Het keyword "COPY" wordt daarnaast gebruikt voor het kopiëren van bestanden, afkomstig van de lokale machine,naar de container. 
+
 %%=============================================================================
 %% Methodologie
 %%=============================================================================
