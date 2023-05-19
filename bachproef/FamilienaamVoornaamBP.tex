@@ -84,7 +84,7 @@
     {Toolset voor automatisatie en controle van Fortigate firewall regels in Azure}
 \academicyear{\advance\year by -1 \the\year--\advance\year by 1 \the\year}
 \examperiod{2}
-\degreesought{\IfLanguageName{dutch}{Professionele bachelor in de toegepaste informatica}{Bachelor of applied computer science}}
+\degreesought{\IfLanguageName{dutch}{Professionele bachelor in de Toegepaste Informatica}{Bachelor of applied Computer Science}}
 \partialthesis{false} %% To display 'in partial fulfilment'
 %\institution{Internshipcompany BVBA.}
 
@@ -175,14 +175,669 @@
 
 \appendix
 
+\chapter{Code}
+
+\section{DockerFile}
+\label{code:DockerFile}
+\begin{lstlisting}
+    # VM version + OS
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get upgrade -y
+#Installation python + usefull python tools
+RUN apt-get -y install python3 python3-nacl python3-pip libffi-dev vim
+
+# ENV ANSIBLE_HOST_KEY_CHECKING=False
+#Declare Timezone
+ENV TZ="Europe/Brussels"
+
+#Install pip 
+RUN python3 -m pip install --upgrade pip
+#Installation of needed + usefull software
+RUN pip3 install ansible jmespath paramiko pandas openpyxl ansible-pylibssh
+
+RUN apt-get install -y sshpass
+#Installation of ansible module needed to configure the firewall using ansible + module to use azure cli with ansible
+RUN ansible-galaxy collection install fortinet.fortios:2.2.2 azure.azcollection
+#NETCOMMON VERSION NEEDS TO BE DOWNGRADED TO 4.1.0 else everything breaks
+RUN ansible-galaxy collection install ansible.netcommon:4.1.0 
+RUN pip3 install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
+RUN apt-get update
+# Installation powershell for linux
+RUN apt-get install -y wget apt-transport-https software-properties-common
+RUN apt-get install wget
+RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+RUN dpkg -i packages-microsoft-prod.deb
+RUN apt-get update
+RUN apt-get install -y powershell
+# add the needed credentials to correct path. This is needed to use the azcollection.
+COPY ./credentials /root/.azure/
+COPY ./azureProfile.json /root/.azure/
+\end{lstlisting}
+
+\section{main.ps1}
+\label{code:main.ps1}
+\begin{lstlisting}[caption={main.ps1 Powershell script}]
+
+###################################################################################
+#                                                                                 #
+#                                                                                 #
+#                                                                                 #  
+#                           SCRIPT FOR SERVICE CONTROL                            #                  
+#                                                                                 #
+#                                                                                 #  
+#                                                                                 #
+###################################################################################
+
+#Declare name for file 
+$varServ = "variables.yml"
+
+## We want to create output file , so that we can use this file to configure the firewall using an ansible playbook
+## Check if file already exists
+if( -not(Test-Path -Path projects\fortigate_policy\$varServ -PathType Leaf)) 
+{
+    # If file does not exist then create the file 
+    try {
+        $null = New-Item -ItemType File -Path $varServ -Force -ErrorAction Stop
+        Write-Host "The file [$varServ] has been created."
+    }
+    catch {
+        throw $_.Exception.Message
+}
+}
+else{
+    Clear-Content $varServ
+}
+
+## fetching date from json that contains data of input user
+$input = (Get-Content "main.json" -Raw) | ConvertFrom-Json
+
+"host: " + $input.Host | Add-Content $varServ
+
+## Run playbook to update json file with newest data.
+ansible-playbook -i inventory.ini monitoringServ.yml
+
+## fetching data from json that contains data of firewall into variable
+$jsonFireServ = (Get-Content "servicesInfo.json" -Raw) | ConvertFrom-Json
+
+
+
+## Declare array and fill it up with all the port numbers from input user
+$port = @()
+foreach($obj in $input.Service){
+    $port += $obj.Value
+}
+
+## Declare array and fill it up with all the service names from input user
+$nameServ = @()
+foreach($obj in $input.Service){
+    $nameServ += $obj.Description
+}
+
+## Declare array and fill it up with all the protocols from input user
+$ProtoServ = @()
+foreach($obj in $input.Service){
+    $ProtoServ += $obj.Protocol
+}
+
+## Declaration of arrays used to seperate tcp data from udp data
+
+### Arrays which are being filled with existing TCP services 
+$tcpNameEx = @()
+$tcpPortEx = @()
+
+### Arrays which are being filled with non-existing TCP services
+$tcpPortNex = @()
+$tcpNameNex = @()
+
+### Arrays which are being filled with existing UDP services
+$udpNameEx = @()
+$udpPortEx = @()
+
+### Arrays which are being filled with non-existing UDP services
+$udpPortNex = @()
+$udpNameNex = @()
+
+## Check if the specified service already exists yes or no. 
+## Boolean used to indicate if the service already exists or not.
+[Boolean]$bestaatAl = 0
+foreach($elem in $input.Service){
+    foreach ($obj in $jsonFireServ.meta.results)
+    {
+## If it already exists AND it is a TCP port add these objects to tcp exist array. 
+        if($obj.{tcp-portrange} -eq $elem.Value -and $elem.Protocol -eq "TCP")
+        {
+            $bestaatAl = 1
+            $tcpNameEx += $obj.name
+            $tcpPortEx += $obj.{tcp-portrange}
+        }
+## If it already exists AND it is a UDP port add these object to udp exist array.
+        if($obj.{udp-portrange} -eq $elem.Value -and $elem.Protocol -eq "UDP")
+        {
+            $bestaatAl = 1 
+            $udpPortEx += $obj.{udp-portrange}
+            $udpNameEx += $obj.name
+            
+        }
+    }
+## If it does not already exist AND it is a TCP port add these object to tcp non-exist array.
+    if($bestaatAl -eq 0 -and $elem.Protocol -eq "TCP")
+    {
+      
+        $tcpNameNex += $elem.Description
+        $tcpPortNex += $elem.Value
+    }
+
+## If it does not already exist AND it is a UDP port add these objects to udp non-exist array.
+    elseif($bestaatAl -eq 0 -and $elem.Protocol -eq "UDP")
+    {
+        $udpNameNex += $elem.Description
+        $udpPortNex += $elem.Value
+    }
+## reset the boolean
+    $bestaatAl = 0
+
+}
+
+## Formatting to get 2 seperate dictionaries into yaml file, for TCP and UDP
+
+## New dictionary start
+"RG_name: RG_Sander.VanNoten" | Add-Content $varServ
+"keyvault_name: kv-weu-vans" | Add-Content $varServ
+"configTCP: " | Add-Content $varServ
+
+## Add the already existing TCP ports to the yaml file in the correct format with the correct name
+for ($num = 0 ; $num -le $tcpNameEx.Length-1; $num++ )
+{
+"    - name: "+$tcpNameEx[$num]| Add-Content $varServ
+"      port: "+$tcpPortEx[$num] | Add-Content $varServ
+}
+
+## Add the not yet existing TCP ports to the yaml file in the correct format
+for ($num = 0 ; $num -le $tcpNameNex.Length-1; $num++ )
+{
+"    - name: TCP/"+$tcpPortNex[$num]| Add-Content $varServ
+"      port: "+$tcpPortNex[$num] | Add-Content $varServ
+"      description: "+$tcpNameNex[$num] | Add-Content $varServ
+}
+
+## add new line
+"`n" | Add-Content $varServ
+## start new dictionary
+"configUDP: " | Add-Content $varServ
+## Add the already existing UDP ports to the yaml file in the correct format
+for ($num = 0 ; $num -le $udpNameEx.Length-1; $num++ )
+{
+"    - name: "+$udpNameEx[$num]| Add-Content $varServ
+"      port: "+$udpPortEx[$num] | Add-Content $varServ
+}
+
+## Add the not yet existing UDP ports to the yaml file in the correct format
+for ($num = 0 ; $num -le $udpNameNex.Length-1; $num++ )
+{
+"    - name: UDP/"+$udpPortNex[$num]| Add-Content $varServ
+"      port: "+$udpPortNex[$num] | Add-Content $varServ
+"      description: "+$udpNameNex[$num] | Add-Content $varServ
+}
+## If everything is done , add the new services to the firewall. 
+
+
+
+$quantity = @()
+foreach($elem in $port)
+{
+    if($elem -like '*-*')
+    {
+        $quantity += $elem.Split('-')
+    }
+}
+
+for ($num = 1 ; $num -le $quantity.Length-1; $num++ )
+{
+        $amountOfPorts = $quantity[$num] - $quantity[$num-1]
+
+        if($amountOfPorts -le 100)
+        {
+            Write-Host "Opening up ${amountOfPorts} ports"
+        }
+        else{
+            Write-Error "You can only add 100 ports at a time. You are now trying to add ${amountOfPorts} ports"
+            exit 10
+        }
+        # Dit is nodig, want volgende iteratie moet 2 sprongen maken
+        $num+=1
+        
+    }
+
+###################################################################################
+#                                                                                 #
+#                                                                                 #
+#                                                                                 #  
+#                           SCRIPT FOR IP CONTROL                                 #             
+#                                                                                 #
+#                                                                                 #  
+#                                                                                 #
+###################################################################################
+
+
+## regex to check if an IP is of IPV4 format + check if it contains /32 prefix
+$Check_32prefix = '(\d{1,3}\.){3}(\d{1,3}\/){1}32$'
+## regex to check if an IP is of IPV4 format
+$Check_if_ip = '(\d{1,3}\.){3}(\d{1,3})$' 
+
+$varFile = "variables.yml"
+
+## Run playbook to update json file with newest data.
+#ansible-playbook -i inventory.ini monitoring.yml
+
+## fetching data from json that contains data of firewall into variable
+$jsonFire = (Get-Content "Addresses.json" -Raw) | ConvertFrom-Json
+
+## fetching date from json that contains data of input user
+
+
+#Declare array and fill it up with all the ip addresses that are in the firewall. 
+$ipFire = @()
+foreach($obj in $jsonFire.meta.results){
+    $ipFire += $obj.subnet
+}
+
+## Declare array and fill it up with all the ip addresses from input user
+$ip = @()
+foreach($obj in $input.Address){
+    $ip += $obj.Value
+}
+
+## Declare array and fill it up with all the names given to the ip addresses from input user
+$jsName = @()
+foreach($obj in $input.Address){
+   $jsName += $obj.Name
+}
+
+## Split up the array so that it only contains IP addresses without /32 to perform check 
+# $ipControl = $ip | ForEach-Object {
+#         ([string]$_).Split("/")[0] 
+#     } 
+
+## Split up the array so that it only contains IP addresses without the full subnetmask to perform check
+# $ipFireControl = $ipFire | ForEach-Object {
+#     ([string]$_).Split(" ")[0] 
+# } 
+
+$dictionary = New-Object System.Collections.Generic.Dictionary"[String,String]" 
+foreach($obj in $input.Address)
+{
+    $dictionary.Add($obj.Name, $obj.Value+" 255.255.255.255" )
+}
+
+$endName = @()
+$endAdd = @()
+
+$test = @()
+foreach($obj in $ip)
+{
+    if($obj -match $Check_32prefix)
+    {
+        $test+= $obj.replace('/32', ' 255.255.255.255')
+    }
+    else{
+        $test+= $obj + " 255.255.255.255"
+    }
+    
+}
+
+[Boolean]$bestaatAl = 0
+foreach($key in $dictionary.Keys){
+    foreach($obj in $jsonFire.meta.results)
+    {
+        if($obj.subnet -eq $($dictionary[$key]))
+        {
+            $bestaatAl = 1
+            $endName += $obj.name
+            $endAdd += $obj.subnet
+        }
+    }
+    
+    if($bestaatAl -eq 0)
+    {
+        $endName += $key
+        $endAdd += $($dictionary[$key])
+
+    }
+    $bestaatAl = 0
+}
+"`n" | Add-Content $varFile
+"ConfigAdd: " | Add-Content $varFile
+for ($num = 0 ; $num -le $endAdd.Length-1 ; $num++ )
+{
+        if( $ip[$num] -match $Check_if_ip ) 
+        {
+            "    - name: "+$endName[$num] | Add-Content $varFile
+            "      adres: "+$endAdd[$num].replace(' 255.255.255.255', '/32') | Add-Content $varFile 
+        }else {
+            Write-Error "$($ip[$num]) is not a valid IPaddress"
+            Exit 10
+         }
+    }
+    # If it does not include /32 but a /24 for example throw this error and exit script 
+   
+Write-host "Initiating playbook..."
+# After all the checks are complete and successful , run the addresses playbook to add the IP addresses to the firewall
+
+###################################################################################
+#                                                                                 #
+#                                                                                 #
+#                                                                                 #  
+#                           CREATE POLICY                                         #             
+#                                                                                 #
+#                                                                                 #  
+#                                                                                 #
+###################################################################################
+
+"`n" | Add-Content $varFile
+"ConfigPolicy: " | Add-Content $varFile
+foreach($obj in $input.Policy)
+{
+    "    - name: "+$obj.name | Add-Content $varFile
+    "      sourceInt: "+'"{{ '+$obj.sourceInt+'}}"' | Add-Content $varFile
+    "      destInt: "+'"{{ '+$obj.destInt+'}}"' | Add-Content $varFile
+    "      service: "+$obj.service | Add-Content $varFile
+}
+    "      sourceAdd: " | Add-Content $varFile
+foreach($obj in $input.Policy.sourceAdd)
+{
+
+"          - name: "+$obj | Add-Content $varFile
+}
+
+"      destAdd: " | Add-Content $varFile
+foreach($obj in $input.Policy.destAdd)
+{
+
+"          - name: "+$obj | Add-Content $varFile
+}
+
+
+foreach($obj in $jsonFire.meta.results)
+{
+    if ($obj.name -like $input.Policy.destAdd)
+    {
+        "      dstAdd: "+$obj.subnet.split(" ")[0] | Add-Content $varFile
+    }
+}
+ansible-playbook -i inventory.ini main.yml
+
+    
+\end{lstlisting}
+
+\section{variables.yml}
+\label{code:Variables.yml}
+\begin{lstlisting}[caption={Variables.yml, dictionaries met elk een eigen doel}]
+host: fortigate1
+RG_name: RG_Sander.VanNoten
+keyvault_name: kv-weu-vans
+configTCP: 
+    - name: TCP/8080
+      port: 8080
+    - name: TCP/8080
+      port: 8080
+      description: bachelorproef
+
+
+configUDP: 
+
+
+ConfigAdd: 
+    - name: dmz-web
+      adres: 172.22.2.5/32
+    - name: lan-host1
+      adres: 172.22.1.5/32
+
+
+configPolicy: 
+    - name: HostToWeb
+      sourceInt: "{{ internal}}"
+      destInt: "{{ web}}"
+      service: TCP/8080
+      sourceAdd: 
+          - name: host-bachelorproef
+      destAdd: 
+          - name: web-bachelorproef
+
+\end{lstlisting}
+
+\section{monitoring.yml}
+\label{code:monitoring.yml}
+
+\begin{lstlisting}[caption={monitoring.yml, staat in voor ophalen info uit keyvault}]
+        - name: Get Fortigate password from keyvault
+      import_tasks: /projects/fortigate_policy/keyvault.yml
+      
+    - name: Get Services
+      fortios_configuration_fact:
+        access_token: "{{ access_token }}"
+        vdom: "{{ vdom }}"
+        selectors: 
+          - selector: firewall.service_custom
+      register: resultServ
+      
+
+    - name: Create raw JSON file of the Address output
+      copy:
+        content: |
+          {{ resultServ | to_nice_yaml }} 
+        dest: /projects/fortigate_policy/servicesInfo.yaml
+    - name: Create raw JSON file of the Address output
+      copy:
+        content: |
+          {{ resultServ | to_nice_json }} 
+        dest: servicesInfo.json
+    - name: Get Addresses
+      fortios_configuration_fact:
+        access_token: "{{ access_token }}"
+        vdom: "{{ vdom }}"
+        selectors:
+          - selector: firewall_address
+      register: resultAd
+      
+
+    - name: Create raw JSON file of the Address output
+      copy:
+        content: |
+          {{ resultAd | to_nice_json }} 
+        dest: /projects/fortigate_policy/Addresses.json
+
+\end{lstlisting}
+
+\section{main.yml}
+\label{code:main.yml}
+
+\begin{lstlisting}[caption=main.yml]
+    ---
+- hosts: "{{ host }}"
+  connection: httpapi 
+  gather_facts: False                                        
+  collections:
+   - fortinet.fortios
+   - azure.azcollection
+  vars:
+   vdom: "root"
+   ansible_httpapi_use_ssl: yes
+   ansible_httpapi_validate_certs: no
+   ansible_httpapi_port: 8443
+  vars_files: ./variables.yml
+  tasks:
+  - name: Get Fortigate password from keyvault
+    import_tasks: /projects/fortigate_policy/keyvault.yml
+     delegate_to: localhost
+   
+  - name: Add address to firewall 
+    import_tasks: /projects/fortigate_policy/addresses.yml
+
+  - name: Add services to firewall 
+    import_tasks: /projects/fortigate_policy/services.yml
+  
+  - name: Add policy to firewall
+    import_tasks: /projects/fortigate_policy/policy.yml
+\end{lstlisting}
+
+\section{keyvault.yml}
+\label{code:keyvault.yml}
+\begin{lstlisting}[caption={keyvault.yml}]
+   - name: Get Key Vault by name
+     azure_rm_keyvault_info:
+      resource_group: "{{ RG_name }}"
+      name: "{{ keyvault_name }}"
+     register: keyvault
+     become_user: root
+   - name: Set key vault URI fact
+     set_fact: keyvaulturi="{{ keyvault['keyvaults'][0]['vault_uri'] }}"
+
+   - name: Get secret value for the ansible api key
+     azure_rm_keyvaultsecret_info:
+      vault_uri: "{{ keyvaulturi }}"
+      name: "fgt-accesstoken"
+     register: kvSecret
+   
+   - name: set secret fact
+     set_fact: access_token="{{ kvSecret['secrets'][0]['secret'] }}"
+\end{lstlisting}
+
+\section{addresses.yml}
+\label{code:addresses.yml}
+
+\begin{lstlisting}[caption={addresses.yml}]
+  - name: "Adding address to firewall"
+    fortios_firewall_address:
+      vdom: "{{ vdom }}" 
+      state: "present"
+      enable_log: true
+      access_token: "{{ access_token }}"
+      firewall_address:
+        name: "{{ item.name }}"
+        type: "ipmask"
+        subnet: "{{ item.adres }}" 
+    with_items: "{{ ConfigAdd }}"
+
+\end{lstlisting}
+
+\section{services.yml}
+\label{code:services.yml}
+\begin{lstlisting}[caption={services.yml}]
+  - name: Configure tcp services from customer.
+    fortios_firewall_service_custom:
+      vdom:  "{{ vdom }}"
+      state: "present"
+      access_token: "{{ access_token }}"
+      firewall_service_custom:
+        name: "{{ item.name }}"
+        category: "Network Services"
+        protocol: "TCP/UDP/SCTP"
+        tcp_portrange: "{{ item.port }}" 
+        # default omit --> Make parameter optional
+        comment: "{{ item.description | default(omit) }}"
+    when: item.name != None and item.port != None
+    with_items: "{{ configTCP }}"
+  
+  - name: Configure udp services from customer.
+    fortios_firewall_service_custom:
+      vdom:  "{{ vdom }}"
+      state: "present"
+      access_token: "{{ access_token }}"
+      firewall_service_custom:
+        name: "{{ item.name | default(omit)}}"
+        category: "Network Services"
+        protocol: "TCP/UDP/SCTP"
+        udp_portrange: "{{ item.port | default(omit) }}" 
+        #Default omit --> Make parameter optional
+        comment: "{{ item.description | default(omit) }}"
+    when: item.name != None and item.port != None
+    with_items: "{{ configUDP }}"
+
+\end{lstlisting}
+
+\section{policy.yml}
+\label{code:policy.yml}
+
+\begin{lstlisting}[caption={policy.yml}]
+   - name: Configure policy LAN to DMZ (policy 4).
+     fortios_firewall_policy:
+      vdom:  "{{ vdom }}"
+      state: "present"
+      access_token: "{{ access_token }}"
+      enable_log: true
+      firewall_policy:
+        policyid: 0
+        name: "{{ item.name }}" 
+        srcintf: 
+          - name: "{{ item.sourceInt }}" 
+        dstintf:
+          - name: "{{ item.destInt }}"
+        srcaddr: "{{ item.sourceAdd }}" 
+        dstaddr: "{{ item.destAdd }}"
+        schedule: "always"
+        service:
+          - name: "{{ item.service }}"
+        action: "accept"
+     with_items: "{{ ConfigPolicy }}"
+\end{lstlisting}
+
+\section{main.json}
+\label{code:main.json}
+
+\begin{lstlisting}
+    {
+    "Policy": [
+            
+        { 
+            "name": "HostToWeb",
+            "sourceInt": "internal", 
+            "destInt": "web",
+            "sourceAdd":["host-bachelorproef"],
+            "destAdd": ["web-bachelorproef"],
+            "service": "TCP/8080"
+            
+        }
+    ],
+
+    "Service": [
+        {
+            "Cat": "Service",
+            "Value": "8080",
+            "Protocol": "TCP",
+            "Description": "bachelorproef"
+
+        }
+    ],
+
+    "Address": [
+        {
+            "Cat": "Address",
+            "Value": "172.22.2.5",
+            "Name": "web-bachelorproef"
+            
+        },
+        {
+            "Cat": "Address",
+            "Value": "172.22.1.5",
+            "Name": "host-bachelorproef"
+        }
+     
+    ],
+
+    "Host" : "fortigate1"
+ 
+}
+\end{lstlisting}
+
 \chapter{Onderzoeksvoorstel}
 
 Het onderwerp van deze bachelorproef is gebaseerd op een onderzoeksvoorstel dat vooraf werd beoordeeld door de promotor. Dat voorstel is opgenomen in deze bijlage.
 
 %% TODO: 
-%\section*{Samenvatting}
+\section*{Samenvatting}
 
-% Kopieer en plak hier de samenvatting (abstract) van je onderzoeksvoorstel.
+In deze bachelorproef Toegepaste Informatica wordt er onderzocht welke toolset er kan gebruikt worden voor het deployen van firewall regels, afkomstig van een web request, naar een Azure firewall en/of een Network Virtual Appliance. Dit gebeurt in opdracht van het IT-bedrijf delaware. Hiervoor zijn verschillende Infrastructure-as-Code oplossingen mogelijk zoals Terraform en Bicep. Aan de hand van een proof of concept worden er templates opgemaakt en getest in de praktijk. Dit gebeurt in een Azure Netwerk met een Azure firewall en een Network Virtual Appliance. Deze proof of concept zal aantonen welke tools er uiteindelijk in de toolset zullen zitten om het probleem op te lossen en dit zo efficiënt mogelijk te laten gebeuren. 
 
 % Verwijzing naar het bestand met de inhoud van het onderzoeksvoorstel
 \input{../voorstel/voorstel-inhoud}
